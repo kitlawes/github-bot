@@ -12,8 +12,7 @@ public class MainTest {
     @Test
     public void testQueryGitHubAPI() {
         try {
-            JSONObject jsonObject = Main.queryGitHubAPI(new URL("https://api.github.com/repos/kitlawes/github-bot/issues"));
-            JSONArray jsonArray = jsonObject.getJSONArray("issues");
+            JSONArray jsonArray = Main.readWithGitHubAPI(new URL("https://api.github.com/repos/kitlawes/github-bot/issues"));
             assertEquals(2, jsonArray.length());
             assert (jsonArray.getJSONObject(0).has("pull_request"));
             assert (!jsonArray.getJSONObject(1).has("pull_request"));
