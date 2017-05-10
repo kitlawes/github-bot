@@ -1,18 +1,17 @@
 import static org.junit.Assert.assertEquals;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class MainTest {
+public class GitHubBotTest {
 
     @Test
     public void testQueryGitHubAPI() {
         try {
-            JSONArray jsonArray = Main.readWithGitHubAPI(new URL("https://api.github.com/repos/kitlawes/github-bot/issues"));
+            JSONArray jsonArray = GitHubBot.readWithGitHubAPI(new URL("https://api.github.com/repos/kitlawes/github-bot/issues"));
             assertEquals(2, jsonArray.length());
             assert (jsonArray.getJSONObject(0).has("pull_request"));
             assert (!jsonArray.getJSONObject(1).has("pull_request"));
