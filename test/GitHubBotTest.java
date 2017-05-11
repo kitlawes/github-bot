@@ -46,47 +46,47 @@ public class GitHubBotTest {
             int expectedCountForCommentsRemainingToRespondTo = 2;
 
             GitHubBot gitHubBot = Mockito.spy(this.gitHubBot);
-            Mockito.when(gitHubBot.getWithGitHubAPI(any(URL.class))).thenAnswer(new Answer<JSONArray>() {
+            Mockito.doAnswer(new Answer<JSONArray>() {
                 @Override
                 public JSONArray answer(InvocationOnMock invocation) throws Throwable {
                     return null;
                 }
-            });
-            Mockito.when(gitHubBot.postWithGitHubAPI(any(URL.class), anyString())).thenAnswer(new Answer<JSONObject>() {
+            }).when(gitHubBot).getWithGitHubAPI(any(URL.class));
+            Mockito.doAnswer(new Answer<JSONObject>() {
                 @Override
                 public JSONObject answer(InvocationOnMock invocation) throws Throwable {
                     return null;
                 }
-            });
-            Mockito.when(gitHubBot.getIssuesForRepository()).thenAnswer(new Answer<JSONArray>() {
+            }).when(gitHubBot).postWithGitHubAPI(any(URL.class), anyString());
+            Mockito.doAnswer(new Answer<JSONArray>() {
                 @Override
                 public JSONArray answer(InvocationOnMock invocation) throws Throwable {
                     return expectedIssuesJSONArray;
                 }
-            });
-            Mockito.when(gitHubBot.getPullRequestsFromIssues(any(JSONArray.class))).thenAnswer(new Answer<JSONArray>() {
+            }).when(gitHubBot).getIssuesForRepository();
+            Mockito.doAnswer(new Answer<JSONArray>() {
                 @Override
                 public JSONArray answer(InvocationOnMock invocation) throws Throwable {
                     return expectedPullRequestJSONArray;
                 }
-            });
-            Mockito.when(gitHubBot.getCountForCommentsRemainingToRespondTo(any(JSONObject.class))).thenAnswer(new Answer<Integer>() {
+            }).when(gitHubBot).getPullRequestsFromIssues(any(JSONArray.class));
+            Mockito.doAnswer(new Answer<Integer>() {
                 @Override
                 public Integer answer(InvocationOnMock invocation) throws Throwable {
                     return expectedCountForCommentsRemainingToRespondTo;
                 }
-            });
-            Mockito.when(gitHubBot.respondWithCommentOnPullRequest(any(JSONObject.class))).thenAnswer(new Answer<JSONObject>() {
+            }).when(gitHubBot).getCountForCommentsRemainingToRespondTo(any(JSONObject.class));
+            Mockito.doAnswer(new Answer<JSONObject>() {
                 @Override
                 public JSONObject answer(InvocationOnMock invocation) throws Throwable {
                     return null;
                 }
-            });
+            }).when(gitHubBot).respondWithCommentOnPullRequest(any(JSONObject.class));
 
             gitHubBot.respondToCommentsOnPullRequests();
 
-            // Test that getIssuesForRepository is called once (plus another time when mocked)
-            Mockito.verify(gitHubBot, Mockito.times(2)).getIssuesForRepository();
+            // Test that getIssuesForRepository is called once
+            Mockito.verify(gitHubBot, Mockito.times(1)).getIssuesForRepository();
 
             ArgumentCaptor<JSONArray> jsonArrayAgument = ArgumentCaptor.forClass(JSONArray.class);
             Mockito.verify(gitHubBot).getPullRequestsFromIssues(jsonArrayAgument.capture());
@@ -121,12 +121,12 @@ public class GitHubBotTest {
             JSONArray expectedIssuesJSONArray = new JSONArray();
 
             GitHubBot gitHubBot = Mockito.spy(this.gitHubBot);
-            Mockito.when(gitHubBot.getWithGitHubAPI(any(URL.class))).thenAnswer(new Answer<JSONArray>() {
+            Mockito.doAnswer(new Answer<JSONArray>() {
                 @Override
                 public JSONArray answer(InvocationOnMock invocation) throws Throwable {
                     return expectedIssuesJSONArray;
                 }
-            });
+            }).when(gitHubBot).getWithGitHubAPI(any(URL.class));
 
             String testRepositoryOwnerUsername = "testrepositoryownerusername";
             gitHubBot.repositoryOwnerUsername = testRepositoryOwnerUsername;
@@ -185,7 +185,7 @@ public class GitHubBotTest {
             String testGitHubBotUsername = "testgithubbotusername";
 
             GitHubBot gitHubBot = Mockito.spy(this.gitHubBot);
-            Mockito.when(gitHubBot.getWithGitHubAPI(any(URL.class))).thenAnswer(new Answer<JSONArray>() {
+            Mockito.doAnswer(new Answer<JSONArray>() {
                 @Override
                 public JSONArray answer(InvocationOnMock invocation) throws Throwable {
                     if (invocation.getArguments()[0].equals(new URL(testCommentsURL))) {
@@ -236,7 +236,7 @@ public class GitHubBotTest {
                     }
                     return null;
                 }
-            });
+            }).when(gitHubBot).getWithGitHubAPI(any(URL.class));
 
             gitHubBot.gitHubBotUsername = testGitHubBotUsername;
             JSONObject pullRequestJSONObject = new JSONObject();
@@ -263,12 +263,12 @@ public class GitHubBotTest {
         try {
 
             GitHubBot gitHubBot = Mockito.spy(this.gitHubBot);
-            Mockito.when(gitHubBot.postWithGitHubAPI(any(URL.class), anyString())).thenAnswer(new Answer<JSONObject>() {
+            Mockito.doAnswer(new Answer<JSONObject>() {
                 @Override
                 public JSONObject answer(InvocationOnMock invocation) throws Throwable {
                     return null;
                 }
-            });
+            }).when(gitHubBot).postWithGitHubAPI(any(URL.class), anyString());
 
             String testRepositoryOwnerUsername = "testrepositoryownerusername";
             gitHubBot.repositoryOwnerUsername = testRepositoryOwnerUsername;

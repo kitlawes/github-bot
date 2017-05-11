@@ -41,6 +41,7 @@ public class GitHubBot {
             gitHubBot.respondToCommentsOnPullRequests();
 
         } catch (IOException ioException) {
+            System.err.println("ERROR - The parameters are incorrect.");
             ioException.printStackTrace();
         }
     }
@@ -63,94 +64,79 @@ public class GitHubBot {
     }
 
     public JSONArray getPullRequestsFromIssues(JSONArray issuesJSONArray) throws MalformedURLException {
-        if (issuesJSONArray != null) {
-            JSONArray pullRequestsJSONArray = new JSONArray();
-            for (int i = 0; i < issuesJSONArray.length(); i++) {
-                JSONObject issueJSONObject = issuesJSONArray.getJSONObject(i);
-                if (issueJSONObject.has("pull_request")) {
-                    pullRequestsJSONArray.put(issueJSONObject);
-                }
+        JSONArray pullRequestsJSONArray = new JSONArray();
+        for (int i = 0; i < issuesJSONArray.length(); i++) {
+            JSONObject issueJSONObject = issuesJSONArray.getJSONObject(i);
+            if (issueJSONObject.has("pull_request")) {
+                pullRequestsJSONArray.put(issueJSONObject);
             }
-            return pullRequestsJSONArray;
         }
-        return null;
+        return pullRequestsJSONArray;
     }
 
     public int getCountForCommentsRemainingToRespondTo(JSONObject pullRequestJSONObject) throws IOException {
-        if (pullRequestJSONObject != null) {
-            int countForCommentsRemainingToRespondTo = 0;
-            // Initial comment
-            String issueBody = pullRequestJSONObject.getString("body");
-            if (issueBody.contains("@bot say-hello")) {
+        int countForCommentsRemainingToRespondTo = 0;
+        // Initial comment
+        String issueBody = pullRequestJSONObject.getString("body");
+        if (issueBody.contains("@bot say-hello")) {
+            countForCommentsRemainingToRespondTo++;
+        }
+        String commentsURL = pullRequestJSONObject.getString("comments_url");
+        JSONArray commentsJSONArray = getWithGitHubAPI(new URL(commentsURL));
+        // Subsequent comments
+        for (int j = 0; j < commentsJSONArray.length(); j++) {
+            String commentBody = commentsJSONArray.getJSONObject(j).getString("body");
+            if (commentBody.contains("@bot say-hello")) {
                 countForCommentsRemainingToRespondTo++;
             }
-            String commentsURL = pullRequestJSONObject.getString("comments_url");
-            JSONArray commentsJSONArray = getWithGitHubAPI(new URL(commentsURL));
-            // Subsequent comments
-            for (int j = 0; j < commentsJSONArray.length(); j++) {
-                String commentBody = commentsJSONArray.getJSONObject(j).getString("body");
-                if (commentBody.contains("@bot say-hello")) {
-                    countForCommentsRemainingToRespondTo++;
-                }
-                String commentUserLogin = commentsJSONArray.getJSONObject(j).getJSONObject("user").getString("login");
-                if (commentUserLogin.equals(gitHubBotUsername) && commentBody.equals("hello world")) {
-                    // Comment is a response from the bot, which means one less response is necessary
-                    countForCommentsRemainingToRespondTo--;
-                    // If a response from the bot is given without being prompted by a comment beforehand, this does not
-                    // count as a response.
-                    countForCommentsRemainingToRespondTo = Math.max(countForCommentsRemainingToRespondTo, 0);
-                }
+            String commentUserLogin = commentsJSONArray.getJSONObject(j).getJSONObject("user").getString("login");
+            if (commentUserLogin.equals(gitHubBotUsername) && commentBody.equals("hello world")) {
+                // Comment is a response from the bot, which means one less response is necessary
+                countForCommentsRemainingToRespondTo--;
+                // If a response from the bot is given without being prompted by a comment beforehand, this does not
+                // count as a response.
+                countForCommentsRemainingToRespondTo = Math.max(countForCommentsRemainingToRespondTo, 0);
             }
-            return countForCommentsRemainingToRespondTo;
         }
-        return 0;
+        return countForCommentsRemainingToRespondTo;
     }
 
     public JSONObject respondWithCommentOnPullRequest(JSONObject pullRequestJSONObject) throws IOException {
-        if (pullRequestJSONObject != null) {
-            int issueNumber = pullRequestJSONObject.getInt("number");
-            return postWithGitHubAPI(
-                    new URL("https://api.github.com/repos/" + repositoryOwnerUsername + "/" + repositoryName + "/issues/" + issueNumber + "/comments"),
-                    "{\"body\":\"hello world\"}"
-            );
-        }
-        return null;
+        int issueNumber = pullRequestJSONObject.getInt("number");
+        return postWithGitHubAPI(
+                new URL("https://api.github.com/repos/" + repositoryOwnerUsername + "/" + repositoryName + "/issues/" + issueNumber + "/comments"),
+                "{\"body\":\"hello world\"}"
+        );
     }
 
     public JSONArray getWithGitHubAPI(URL url) throws IOException {
-        if (url != null) {
-            StringBuilder stringBuilder = new StringBuilder();
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setRequestMethod("GET");
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            bufferedReader.close();
-            JSONObject jsonObject = new JSONObject("{\"array\":" + stringBuilder.toString() + "}");
-            return jsonObject.getJSONArray("array");
+        StringBuilder stringBuilder = new StringBuilder();
+        HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+        httpURLConnection.setRequestMethod("GET");
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            stringBuilder.append(line);
         }
-        return null;
+        bufferedReader.close();
+        JSONObject jsonObject = new JSONObject("{\"array\":" + stringBuilder.toString() + "}");
+        return jsonObject.getJSONArray("array");
     }
 
     public JSONObject postWithGitHubAPI(URL url, String body) throws IOException {
-        if (url != null) {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setRequestMethod("POST");
-            String encoding = new BASE64Encoder().encode((gitHubBotUsername + ":" + gitHubBotPassword).getBytes());
-            httpURLConnection.setRequestProperty("Authorization", "Basic " + encoding);
-            httpURLConnection.setDoOutput(true);
-            httpURLConnection.getOutputStream().write(body.getBytes("UTF8"));
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
-            StringBuffer stringBuilder = new StringBuffer();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            bufferedReader.close();
-            return new JSONObject(stringBuilder.toString());
+        HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+        httpURLConnection.setRequestMethod("POST");
+        String encoding = new BASE64Encoder().encode((gitHubBotUsername + ":" + gitHubBotPassword).getBytes());
+        httpURLConnection.setRequestProperty("Authorization", "Basic " + encoding);
+        httpURLConnection.setDoOutput(true);
+        httpURLConnection.getOutputStream().write(body.getBytes("UTF8"));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+        StringBuffer stringBuilder = new StringBuffer();
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            stringBuilder.append(line);
         }
-        return null;
+        bufferedReader.close();
+        return new JSONObject(stringBuilder.toString());
     }
 }
